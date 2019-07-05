@@ -44,7 +44,7 @@ void reset_MSP55LV128() {
 
 void erase_MSP55LV128() {
 
-	iprintf("Erasing...");
+	iprintf("Erasing...\n");
 
 	write_swapped_word_rom(0x555, 0xAA);
 	write_swapped_word_rom(0x2AA, 0x55);
@@ -56,7 +56,8 @@ void erase_MSP55LV128() {
 	u16 status = 0x0000;
 	do {
 		status = read_swapped_word_rom(0x0000);
-		iprintf("Status: %04x\n", status);
+		//iprintf("Status: %04x\n", status);
+		swiDelay(20);
 	} while ((status | 0xFF7F) != 0xFFFF);
 
 	iprintf("Done!\n");
@@ -67,40 +68,63 @@ void write_MSP55LV128() {
 
 	if (fatInitDefault()) {
 
-		FILE* fd = fopen("fat:/ZELDA.gba", "rb");
+		FILE* fd = fopen("fat:/Nelson/Pocket Monsters - Sapphire (Japan).gba", "rb");
 
 		if (fd == NULL) {
 			iprintf("Error opening file");
 			return;
 		}
 
-		unsigned long fileSize = 8388608;
-
-		u16 currWord = 0x1234;
-		u8 w0 = 0xA0;
-		u8 w1 = 0xAA;
-
-		for (unsigned long currAddress = 0, currByte = 0; currByte < fileSize; currAddress += 1, currByte += 2) {
-
-			fread(&w1, 1, 1, fd);
-			fread(&w0, 1, 1, fd);
-
-			currWord = ((w0 & 0xFF) << 8) | (w1 & 0xFF);
-
-			//iprintf("Word: %02x %02x %04x\n", w0, w1, currWord);
-
-			write_programming_cycle();
-
-			write_word_rom(currAddress, currWord);
 
 
-			u16 status = 0x0000;
-			do {
-				status = read_word_rom(currAddress);
-				iprintf("[%u] Status: %04x\n", currAddress, status);
-			} while ((status | 0xFF7F) != (currWord | 0xFF7F));
+		unsigned long file_size = 8388608;
+		unsigned long buffer_size = 1024 * 2 * 1024;
+		unsigned long max_buffers = (file_size / buffer_size);
+
+		u8* file_buffer = (u8*)malloc(sizeof(u8) * buffer_size);
+
+		u16 current_word;
+		u8 w0;
+		u8 w1;
+
+		for (unsigned long current_buffer = 0; current_buffer < max_buffers; current_buffer++) {
+
+
+			if ( (current_buffer % 1) == 0) {
+				iprintf("[%u / %u] Working\n", current_buffer, max_buffers);
+			}
+
+
+			fread(file_buffer, 1, buffer_size, fd);
+
+			for (unsigned long current_address = 0, current_byte = 0; current_byte < buffer_size; current_address += 1, current_byte += 2) {
+
+				w0 = file_buffer[current_byte + 1];
+				w1 = file_buffer[current_byte];
+
+				current_word = ((file_buffer[current_byte + 1] & 0xFF) << 8) | (file_buffer[current_byte] & 0xFF);
+
+				//iprintf("Word: %02x %02x %04x\n", w0, w1, current_word);
+
+				unsigned long target_address = (current_buffer * buffer_size / 2) + current_address;
+
+				write_programming_cycle();
+
+				write_word_rom(target_address, current_word);
+
+
+				u16 status = 0x0000;
+				do {
+					status = read_word_rom(target_address);
+					swiDelay(20);
+					//iprintf("[%u] Status: %04x\n", target_address, status);
+				} while ((status | 0xFF7F) != (current_word | 0xFF7F));
+
+			}
+
 
 		}
+
 
 		iprintf("Done!\n");
 
