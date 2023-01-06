@@ -1,9 +1,7 @@
 #include "app.h"
 
-
 static PrintConsole topScreen;
 static PrintConsole bottomScreen;
-
 
 u16 swapBits(u16 n)
 {
@@ -62,23 +60,22 @@ void erase_MSP55LV128() {
 
 	iprintf("Done!\n");
 }
-void write_MSP55LV128() {
+void write_MSP55LV128(char* filePath) {
 
 	reset_MSP55LV128();
 
 	if (fatInitDefault()) {
-
-		FILE* fd = fopen("fat:/Nelson/Pocket Monsters - Sapphire (Japan).gba", "rb");
+			//"fat:/Nelson/output-POKEMON_SAPP_AXPE01.gba"
+		FILE* fd = fopen(filePath, "rb");
 
 		if (fd == NULL) {
 			iprintf("Error opening file");
 			return;
 		}
 
-
-
-		unsigned long file_size = 8388608;
-		unsigned long buffer_size = 1024 * 2 * 1024;
+		unsigned long file_size = fe_computeFileSize(filePath);
+		iprintf("size: %lu\n", file_size);
+		unsigned long buffer_size = 1024 * 2 * 512;
 		unsigned long max_buffers = (file_size / buffer_size);
 
 		u8* file_buffer = (u8*)malloc(sizeof(u8) * buffer_size);
@@ -91,7 +88,7 @@ void write_MSP55LV128() {
 
 
 			if ( (current_buffer % 1) == 0) {
-				iprintf("[%u / %u] Working\n", current_buffer, max_buffers);
+				iprintf("[%lu / %lu] Working\n", current_buffer, max_buffers);
 			}
 
 
@@ -132,10 +129,6 @@ void write_MSP55LV128() {
 	else {
 		iprintf("fatInitDefault failure: terminating\n");
 	}
-
-
-
-
 }
 
 void write_buffered_MSP55LV128() {
@@ -223,11 +216,41 @@ void read_MSP55LV128() {
 
 }
 
+void processKeys() {
+	
+	scanKeys();
+	uint32 input = keysDownRepeat();
 
+	if (input & KEY_START) {
+		fe_open();
+	}
+	else if (input & KEY_SELECT) {
+		fe_close();
+	}
+	else if (input & KEY_UP) {
+		fe_browseUp();
+	}
+	else if(input & KEY_DOWN) {
+		fe_browseDown();
+	}
+	else if(input & KEY_A) {
+		char* result = fe_selectItem();
+
+		if(result) {
+			char* selectedItemPath = (char*) malloc(sizeof(char) * strlen(result) + 1);
+			strcpy(selectedItemPath, result);
+			fe_close();
+			iprintf("flashing %s\n", selectedItemPath);
+			erase_MSP55LV128();
+			write_MSP55LV128(selectedItemPath);
+		}
+	}
+	else if(input & KEY_B) {
+		fe_browseOut();
+	}
+}
 
 int main() {
-
-
 
 	// Initialize consoles
 	videoSetMode(MODE_0_2D);
@@ -243,40 +266,8 @@ int main() {
 	sysSetCartOwner(true);
 
 	while (true) {
-
-
-		while (true) {
-
-			swiWaitForVBlank();
-
-			scanKeys();
-			uint32 input = keysDownRepeat();
-
-			if (input & KEY_B) {
-				write_MSP55LV128();
-				break;
-			}
-			if (input & KEY_RIGHT) {
-				erase_MSP55LV128();
-				break;
-			}
-			if (input & KEY_DOWN) {
-				read_MSP55LV128();
-				break;
-			}
-
-
-
-		}
-
-
+		swiWaitForVBlank();
+		processKeys();
 	}
-
-
-
-
-
-
-
 	return 0;
 }
