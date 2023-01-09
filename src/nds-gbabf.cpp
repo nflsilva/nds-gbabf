@@ -1,7 +1,8 @@
-#include "app.h"
+#include "nds-gbabf.h"
 
 static PrintConsole topScreen;
 static PrintConsole bottomScreen;
+bool isRunning;
 
 u16 swapBits(u16 n)
 {
@@ -221,13 +222,7 @@ void processKeys() {
 	scanKeys();
 	uint32 input = keysDownRepeat();
 
-	if (input & KEY_START) {
-		fe_open();
-	}
-	else if (input & KEY_SELECT) {
-		fe_close();
-	}
-	else if (input & KEY_UP) {
+	if (input & KEY_UP) {
 		fe_browseUp();
 	}
 	else if(input & KEY_DOWN) {
@@ -248,6 +243,9 @@ void processKeys() {
 	else if(input & KEY_B) {
 		fe_browseOut();
 	}
+	else if(input & KEY_START) {
+		isRunning = false;
+	}
 }
 
 int main() {
@@ -265,9 +263,13 @@ int main() {
 	// Enable accessing slot 2:
 	sysSetCartOwner(true);
 
-	while (true) {
+	isRunning = true;
+	fe_open();
+	while (isRunning) {
 		swiWaitForVBlank();
 		processKeys();
 	}
+	fe_close();
+
 	return 0;
 }

@@ -149,6 +149,7 @@ char* fe_selectItem() {
 	}
 
 	context->selectedItemIndex = 0;
+	context->windowStartItemIndex = 0;
 	fe_loadCurrentDirectoryContents();
 	fe_drawCurrentDirectory();
 	return NULL;
