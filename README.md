@@ -45,7 +45,7 @@ Then generate the .nds file by running
 ## What cartridges are currently supported?
 Currently, this is the only supported because this is the only bootleg I own. However, it is certainly possible to add support for more cartridges, specially if they are considered usable by this [table](https://flashcartdb.com/index.php/Main_Page).
 
-If you test this code with other flash carts, please feel free to reach out to me so I can update this documentation.
+Feel free to test this code with other flash carts, at your own risk.
 
 - #### [MSP55LV128](https://flashcartdb.com/index.php/MSP55LV128_AGB-E05-01)
 - #### [MSP55LV128M](https://flashcartdb.com/index.php/MSP55LV128M_AGB-E05-01)
