@@ -5,7 +5,7 @@ Nintendo DS Game Boy Advance Bootleg Flasher (nds-gbabf) is tool to re-flash som
 
 ## Why?
 Currently, off the shelf flash cartridges for the Nintendo Game Boy Advance are fairly expensive. 
-Furthermore, to program these devices, it is also required a cartridge programmer. This approach is user friendly but does require some monetary investment, extra software and world-wide shipping.
+Furthermore, programming these devices requires a cartridge programmer. This approach is user friendly but does require some monetary investment, extra software and world-wide shipping.
 
 As an alternative, this project offers a more affordable and convenient way of using some chinese bootlegs as flash cartridges, taking advantage of their high availability and how easy it is to run homebrew solutions on the Nintendo DS and Nintendo DS Lite.
 
@@ -28,10 +28,10 @@ Then it should be easy to use, really:
 
 The new ROM should now be flashed onto Game Boy Advance cartridge.
 
->***Note:** some Game Boy Advance chinese bootlegs only support SRAM saves. You need to make sure that your ROM is patched accordingly. It is easy but you may want to check this [article](https://flashcartdb.com/index.php/How_to_Patch_GBA_Games_with_GBATA) on how to do so.
+>***Note:** some Game Boy Advance chinese bootlegs only support SRAM saves, so sure your ROM is patched accordingly. Check this [article](https://flashcartdb.com/index.php/How_to_Patch_GBA_Games_with_GBATA) on how to do so.
 
 ## How to build this?
-You are free to change and build this tool for your self. Here are some guidelines of how to accomplish this.
+Feel free to change and build this tool for your self. Here are some guidelines of how to accomplish this.
 
 It is required to install the following tools
 * [devkitPro](https://devkitpro.org/wiki/Getting_Started) (nds-dev specifically)
@@ -45,8 +45,6 @@ Then generate the .nds file by running
 ## What cartridges are currently supported?
 Currently, this is the only supported because this is the only bootleg I own. However, it is certainly possible to add support for more cartridges, specially if they are considered usable by this [table](https://flashcartdb.com/index.php/Main_Page).
 
-Feel free to test this code with other flash carts, at your own risk.
-
 - #### [MSP55LV128](https://flashcartdb.com/index.php/MSP55LV128_AGB-E05-01)
 - #### [MSP55LV128M](https://flashcartdb.com/index.php/MSP55LV128M_AGB-E05-01)
 
@@ -57,7 +55,7 @@ Feel free to test this code with other flash carts, at your own risk.
 ## How to add support for more cartridges?
 When programming for the Nintendo DS, you may notice that *libnds* provides a convenient pointer to [GBAROM](https://libnds.devkitpro.org/memory_8h.html#ab537cce395920f11baf640d5d7451fa7). This is a pointer to an array of 16bit words, composing the ROM from *slot-2* cartridge.
 
-In this example we read a word from *slot-2* ROM and then write it back to cartridge.
+In this example, we read a word from *slot-2* ROM and then write it back to cartridge.
 
 ``` C
 uint16_t word = GBAROM[address];
@@ -66,12 +64,14 @@ GBAROM[address] = word;
 ```
 
 Simple isn't it?
+
+Now we just need to open a ROM file and write it to *GBAROM*.
 Well, not really.😜
 Writing to cartridge is a bit more tricky!
 
 Let me explain.
 
-These flash cartridge store the ROM on a flash memory chip and require to enter programming mode to allow the reprogramming of the chip. This is done by writing a cycle of words in specific addresses of the ROM to issue a command to the chip. As such, in a nutshell, adding support for more cartridges requires understanding how to interact with the flash chip used on the cartridge PCB.
+These flash cartridge store the ROM on a flash memory chip and need to enter programming mode for reprogramming. This is done by writing a cycle of words in specific addresses of the ROM to issue the command to the chip. As such, in a nutshell, adding support for more cartridges requires understanding how to interact with the flash chip used on the cartridge PCB.
 
 So, what commands do we need?🤔
 
@@ -89,7 +89,7 @@ GBAROM[0x2AA] = 0x55;
 GBAROM[0x555] = 0x10;
 ```
 
-There's also another example, from the great [cartreader](https://github.com/sanni/cartreader) project by [sanni](https://github.com/sanni/) (it's a great project, consider checking it out!). In [this function](https://github.com/sanni/cartreader/blob/master/Cart_Reader/GBA.ino#L2325), the code is issuing a command to erase a specific sector. Using *libnds* this would translate to.
+There's also another example, from the great [cartreader](https://github.com/sanni/cartreader) project, by [sanni](https://github.com/sanni/) (it's a great project, consider checking it out!). In [this function](https://github.com/sanni/cartreader/blob/master/Cart_Reader/GBA.ino#L2325), the code is issuing a command to erase a specific sector. Using *libnds*, this would translate to.
 
 ``` C
 GBAROM[0xAAA] = 0xAA;
@@ -134,7 +134,7 @@ GBAROM[address] = data;
 
 >***Note:** once again, there should be a delay in between each write. ```swiDelay(10)``` works fine.
 
-Just like erasing, to verify the programming process, pull the flash memory value and verify if the 7th bit of returning word is equal to the data 7th bit. This algorithm is described in detail on page 61 of the same [datasheet](assets/e520904.pdf).
+To verify the programming process, pull the flash memory value and verify if the 7th bit of returning word is equal 7th bit of the word you're trying to write. This algorithm is described in detail on page 61 of the same [datasheet](assets/e520904.pdf).
 
 ``` C
 do {
