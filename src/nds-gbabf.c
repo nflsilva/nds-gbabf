@@ -24,7 +24,7 @@ u16 read_swapped_word_rom(unsigned long address) {
 }
 
 void write_word_rom(unsigned long address, u16 byte) {
-	GBA_BUS[address] = byte;
+	GBAROM[address] = byte;
 	swiDelay(10);
 }
 void write_swapped_word_rom(unsigned long address, u16 byte) {
